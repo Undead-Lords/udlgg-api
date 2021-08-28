@@ -43,7 +43,10 @@ api.use(
 let home = require("./routes/home")
 let activity = require("./routes/activity")
 let timeline = require("./routes/timeline")
+let update = require("./routes/update")
+
 //use routes
 api.use("/timeline", timeline)
 api.use("/activity", activity)
+api.use("/update", update)
 api.use("/", home)

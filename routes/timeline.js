@@ -19,120 +19,65 @@ let database = new pg.Pool({
 
 router.get("/", async function(req, res) {
   let results = false;
-  if (results) {
-    res.status(200).send(results);
-  } else {
-    res.status(404).send(`Error.`);
-  }
-});
-
-router.get("/update", async function(req, res) {
-  let results = false;
-  //require the library, main export is a function
-  const simpleGit = require('simple-git');
-  const git = simpleGit(process.cwd());
-  try{
-    if(!fs.existsSync('timeline')) {
-      console.log("UDL Timeline didn't exist, creating it...")
-      await git.clone('https://github.com/Undead-Lords/udl-history', './timeline', null)
-        .cwd('./timeline').reset(['--hard']);
-      console.log("Loading UDL Timeline into Database... ");
-      await jsonLoader(process.cwd() + '/timeline/events/')      
-      await purgeTimeline()
-      res.status(200).send("UDL Timeline Initialized. Praise Myrkul!");
-    } else {
-      console.log("UDL Timeline exists, updating it...")
-      await git.cwd('./timeline').pull().reset(['--hard']);
-      console.log("Loading UDL Timeline into Database... ");
-      //delete all events
-      await purgeTimeline()
-      //load in all events from repository
-      await jsonLoader(process.cwd() + '/timeline/events/')      
-      res.status(200).send("UDL Timeline Updated. Praise Myrkul!");
-    } 
-  }
-  catch (e) {
-    res.status(404).send(`UDL Timeline failed at updating.`)
-    console.error("UDL Timeline update error: ", e)
-  }
-});
-
-module.exports = router;
-
-async function jsonLoader(currentPath) {
-  console.log("Reading Events from...", currentPath);
-  var files = fs.readdirSync(currentPath);
-  for (let i in files) {
-    let currentFile = currentPath + "/" + files[i];
-    let stats = await fs.statSync(currentFile);
-    if (stats.isFile() && currentFile.includes(".json")) {
-      let jsonData = {}
-      let readFile =  await fs.readFileSync(currentFile)
-      if (!readFile) { 
-         console.error("Error Reading File:", currentFile, err) 
-      } 
-      else {
-        try {
-          jsonData = JSON.parse(readFile)
-          console.log("Adding Event...", jsonData.eventName)
-          await loadEvent(jsonData)
-        } catch (err) {
-          console.error("JSON Syntax Error Detected In:", currentPath + '/' + files[i], err)
-        }
-      }
-    } else if (stats.isDirectory()) {
-      jsonLoader(currentFile);
+  try { 
+      results = await database
+         .query({
+            text: "SELECT * FROM public.udl_timeline WHERE event_start <= NOW() ORDER BY event_start DESC",
+            values: []
+          })
+        .catch(e => console.log(e));
+    } catch (e) {
+      console.error(e);
     }
+  if (results && results.rowCount > 0) {
+    res.status(200).send(results.rows);
+  } else {
+    res.status(404).send(`The Undead Lords Timeline is currently unavailable. Please try again soon.`);
   }
-  return new Promise(async (resolve, reject) => {
-    resolve(true);
-  });
-}
+});
 
-async function loadEvent(eventJSON){
-  return new Promise(async (resolve, reject) => {
-    let results;
-    let customID = eventJSON.eventName.toLowerCase().split(' ').join("-")
-    let startDate = await eventJSON.eventStartDate ? dayjs(eventJSON.eventStartDate, "MM-DD-YYYY").format('YYYY-MM-DD 00:00:00') : dayjs("1800-01-01", "YYYY-MM-DD").format('YYYY-MM-DD 00:00:00')
-    let endDate = await eventJSON.eventEndDate && eventJSON.eventEndDate != "" ? dayjs(eventJSON.eventEndDate, "MM-DD-YYYY").format('YYYY-MM-DD 00:00:00') : startDate
-      try { 
+router.get("/upcoming", async function(req, res) {
+  let results = false;
+  try { 
+      results = await database
+         .query({
+            text: "SELECT * FROM public.udl_timeline WHERE event_start > NOW() ORDER BY event_start DESC",
+            values: []
+          })
+        .catch(e => console.log(e));
+    } catch (e) {
+      console.error(e);
+    }
+  if (results && results.rowCount > 0) {
+    res.status(200).send(results.rows);
+  } else if ( results && results.rowCount==0){
+    res.status(200).send('There are no upcoming events!');
+  } else {
+    res.status(404).send(`The Undead Lords Timeline is currently unavailable. Please try again soon.`);
+  }
+});
+
+router.get("/:id", async function(req, res) {
+  let results = false;
+  if (req.params.id && req.params.id.toLowerCase().contains("knighting")) {
+    let name = req.params.id.toLowerCase()
+    try { 
         results = await database
-           .query({
-              text: "INSERT INTO udl_timeline (id, event_name, event_type, event_start, event_end, event_short_description, event_long_description, event_url, associated_knights, associated_games) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
-              values: [customID, eventJSON.eventName, eventJSON.eventType, startDate, endDate, eventJSON.eventShortDescription, eventJSON.eventLongDescription, eventJSON.eventURL, eventJSON.associatedKnights.join(", "), eventJSON.associatedGames.join(", ")]
+          .query({
+              text: "SELECT * FROM public.udl_timeline WHERE LOWER(event_type) = $1 ORDER BY event_start DESC",
+              values: [name]
             })
           .catch(e => console.log(e));
       } catch (e) {
         console.error(e);
       }
-    if (results && results.rowCount==1 && results.command=="INSERT") {
-      resolve(true);
-    } else {
-      console.log(results)
-      resolve(false);
-    }
-  })
-}
+  } 
+  if (results && results.rowCount > 0) {
+    res.status(200).send(results.rows);
+  } else {
+    res.status(404).send(`The Undead Lords Timeline is currently unavailable. Please try again soon.`);
+  }
+});
 
-async function purgeTimeline(){
-  return new Promise(async (resolve, reject) => {
-    let results;
-      try {
-        results = await database
-          .query({
-            text:
-              "DELETE FROM public.udl_timeline",
-            values: []
-          })
-          .catch(e => console.log(e));
-      } catch (e) {
-        console.error(e);
-      }
-    if (results.rowCount==0) {
-      resolve(true);
-    } else {
-      resolve(false);
-    }
-  })
-}
 
+module.exports = router;
