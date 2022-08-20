@@ -49,13 +49,13 @@ router.get('/:id', async function (req, res) {
       })
       .catch(e => {
         console.log(e.stack)
-        res.status(404).send(`pgSQL Failure. No results found!`)
+        res.status(404).send(`Retrieval Failure. No results found!`)
       })
       .then(() => client.release())
     })
     .catch(e => {
       console.log(e.stack)
-      res.status(404).send(`pgSQL Failure. No results found!`)
+      res.status(404).send(`Retrieval Failure. No results found!`)
     })
   }
 })

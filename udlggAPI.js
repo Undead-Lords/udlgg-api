@@ -41,12 +41,22 @@ api.use(
 
 //load routes
 let home = require("./routes/home")
-let activity = require("./routes/activity")
+let chat = require("./routes/chat")
+let gaming = require("./routes/gaming")
+let members = require("./routes/members")
+let traffic = require("./routes/traffic")
 let timeline = require("./routes/timeline")
 let update = require("./routes/update")
+let voice = require("./routes/voice")
 
 //use routes
+api.use("/members", members)
+api.use("/traffic", traffic)
+
+api.use("/activity/chat", chat)
+api.use("/activity/gaming", gaming)
+api.use("/activity/voice", voice)
+
 api.use("/timeline", timeline)
-api.use("/activity", activity)
 api.use("/update", update)
 api.use("/", home)
