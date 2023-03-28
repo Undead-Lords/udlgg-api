@@ -74,7 +74,7 @@ async function getActivity(database) {
       results = await database
         .query({
           text:
-            "SELECT activity.id, activity.member_id, activity.start_stamp, activity.end_stamp, CEIL(EXTRACT(EPOCH FROM (activity.end_stamp - activity.start_stamp))/60) AS duration, activity.channel FROM public.udl_participation AS activity JOIN public.udl_roster AS roster ON activity.member_id = roster.member_id WHERE activity.type = 'voice' AND NOT activity.channel = 'AFK' AND NOT roster.privacy = 2 AND NOT roster.active = FALSE AND activity.start_stamp > (current_date - INTERVAL '24 months')",
+            "SELECT activity.id, activity.member_id, activity.start_stamp, activity.end_stamp, CEIL(EXTRACT(EPOCH FROM (activity.end_stamp - activity.start_stamp))/60) AS duration, activity.channel FROM public.udl_participation AS activity JOIN public.udl_roster AS roster ON activity.member_id = roster.member_id WHERE activity.type = 'voice' AND NOT activity.channel = 'AFK' AND NOT roster.privacy = 2 AND NOT roster.active = FALSE AND activity.start_stamp > (current_date - INTERVAL '36 months') ORDER BY activity.start_stamp DESC",
           values: []
         })
         .catch(e => console.log(e));

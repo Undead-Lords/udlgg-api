@@ -13,8 +13,8 @@ let database = new pg.Pool({
   database: process.env.DBNAME,
   password: process.env.DBPASS,
   max: 10,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000
+  idleTimeoutMillis: 60000,
+  connectionTimeoutMillis: 20000
 })
 
 router.get("/", async function(req, res) {
@@ -82,14 +82,12 @@ async function jsonLoader(currentPath) {
 async function loadEvent(eventJSON){
   return new Promise(async (resolve, reject) => {
     let results;
-    let customID = eventJSON.eventName.toLowerCase().split(' ').join("-")
-    let startDate = await eventJSON.eventStartDate ? dayjs(eventJSON.eventStartDate, "MM-DD-YYYY").format('YYYY-MM-DD 00:00:00') : dayjs("1800-01-01", "YYYY-MM-DD").format('YYYY-MM-DD 00:00:00')
-    let endDate = await eventJSON.eventEndDate && eventJSON.eventEndDate != "" ? dayjs(eventJSON.eventEndDate, "MM-DD-YYYY").format('YYYY-MM-DD 00:00:00') : startDate
+    let startDate = await eventJSON.eventDate ? dayjs(eventJSON.eventDate, "M-D-YYYY").format('YYYY-MM-DD 00:00:00') : dayjs("1994-9-1", "YYYY-MM-DD").format('YYYY-MM-DD 00:00:00')
       try { 
         results = await database
            .query({
-              text: "INSERT INTO udl_timeline (id, event_name, event_type, event_start, event_end, event_short_description, event_long_description, associated_knights, associated_games) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
-              values: [customID, eventJSON.eventName, eventJSON.eventType, startDate, endDate, eventJSON.eventShortDescription, eventJSON.eventLongDescription, eventJSON.associatedKnights.join(", "), eventJSON.associatedGames.join(", ")]
+              text: "INSERT INTO udl_timeline (id, event_name, event_type, event_date, event_short_description, event_long_description) VALUES ($1, $2, $3, $4, $5, $6)",
+              values: [eventJSON.id, eventJSON.eventName, eventJSON.eventType, startDate, eventJSON.eventShortDescription, eventJSON.eventLongDescription]
             })
           .catch(e => console.log(e));
       } catch (e) {

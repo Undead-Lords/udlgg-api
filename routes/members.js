@@ -9,8 +9,8 @@ let database = new pg.Pool({
     database: process.env.DBNAME,
     password: process.env.DBPASS,
     max: 10,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000
+    idleTimeoutMillis: 60000,
+    connectionTimeoutMillis: 20000
 })
 
 router.get("/", async function(req, res) {
@@ -31,7 +31,7 @@ async function getMembers(database) {
             results = await database
             .query({
             text:
-                "SELECT member_id, member_rank, last_online, active, privacy, CASE privacy WHEN 1 THEN CONCAT('Anonymous Knight ', RANK() OVER (ORDER BY member_id)) ELSE member_name END member_name FROM public.udl_roster WHERE NOT active = false",
+                "SELECT member_id, member_rank, last_online, active, privacy, CASE privacy WHEN 1 THEN CONCAT('Anonymous Knight ', RANK() OVER (ORDER BY member_id)) ELSE member_name END member_name FROM public.udl_roster WHERE NOT active = false ORDER BY member_name",
                 values: []
             })
             .catch(e => console.log(e));

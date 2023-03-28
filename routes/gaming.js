@@ -10,8 +10,8 @@ let database = new pg.Pool({
   database: process.env.DBNAME,
   password: process.env.DBPASS,
   max: 10,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000
+  idleTimeoutMillis: 60000,
+  connectionTimeoutMillis: 20000
 })
 
 router.get("/", async function(req, res) {
@@ -83,7 +83,7 @@ async function getActivity(database) {
       results = await database
         .query({
           text:
-            "SELECT journal.id, journal.member_id, journal.game_name, journal.journey_start, journal.journey_end, journal.journey_duration FROM public.udl_journal AS journal JOIN public.udl_roster AS roster ON journal.member_id = roster.member_id WHERE journal.journey_start > (current_date - INTERVAL '24 months') AND NOT roster.privacy = 2 AND NOT roster.active = FALSE",
+            "SELECT journal.id, journal.member_id, journal.game_name, journal.journey_start, journal.journey_end, journal.journey_duration FROM public.udl_journal AS journal JOIN public.udl_roster AS roster ON journal.member_id = roster.member_id WHERE journal.journey_start > (current_date - INTERVAL '36 months') AND NOT roster.privacy = 2 AND NOT roster.active = FALSE ORDER BY journal.journey_start DESC",
           values: []
         })
         .catch(e => console.log(e));

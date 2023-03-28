@@ -9,8 +9,8 @@ let database = new pg.Pool({
   database: process.env.DBNAME,
   password: process.env.DBPASS,
   max: 10,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000
+  idleTimeoutMillis: 60000,
+  connectionTimeoutMillis: 20000
 })
 
 router.get("/", async function(req, res) {
@@ -32,7 +32,7 @@ async function getActivity(database) {
       results = await database
         .query({
           text:
-            "SELECT activity.id, activity.member_id, activity.start_stamp, activity.channel, activity.sentiment FROM public.udl_participation AS activity JOIN public.udl_roster AS roster ON activity.member_id = roster.member_id WHERE activity.type = 'text' AND NOT roster.privacy = 2 AND NOT roster.active = FALSE AND activity.start_stamp > (current_date - INTERVAL '24 months')",
+            "SELECT activity.id, activity.member_id, activity.start_stamp, activity.channel, activity.sentiment FROM public.udl_participation AS activity JOIN public.udl_roster AS roster ON activity.member_id = roster.member_id WHERE activity.type = 'text' AND NOT roster.privacy = 2 AND NOT roster.active = FALSE AND activity.start_stamp > (current_date - INTERVAL '36 months') ORDER BY activity.start_stamp DESC",
           values: []
         })
         .catch(e => console.log(e));
