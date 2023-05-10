@@ -21,8 +21,8 @@ router.get("/", async function(req, res) {
   let results = false;
   try { 
       results = await database
-         .query({
-            text: "SELECT * FROM public.udl_timeline WHERE event_date <= NOW() ORDER BY event_date DESC",
+        .query({
+            text: "SELECT * FROM public.vw_udl_timeline WHERE event_date <= NOW()",
             values: []
           })
         .catch(e => console.log(e));
@@ -40,8 +40,8 @@ router.get("/upcoming", async function(req, res) {
   let results = false;
   try { 
       results = await database
-         .query({
-            text: "SELECT * FROM public.udl_timeline WHERE event_date > NOW() ORDER BY event_date DESC",
+        .query({
+            text: "SELECT * FROM public.vw_udl_timeline WHERE event_date > NOW()",
             values: []
           })
         .catch(e => console.log(e));
@@ -64,7 +64,7 @@ router.get("/:id", async function(req, res) {
     try { 
         results = await database
           .query({
-              text: "SELECT * FROM public.udl_timeline WHERE LOWER(event_type) = $1 ORDER BY event_date DESC",
+              text: "SELECT * FROM public.vw_udl_timeline WHERE LOWER(event_type) = $1",
               values: [name]
             })
           .catch(e => console.log(e));
@@ -78,6 +78,5 @@ router.get("/:id", async function(req, res) {
     res.status(404).send(`The Undead Lords Timeline is currently unavailable. Please try again soon.`);
   }
 });
-
 
 module.exports = router;
